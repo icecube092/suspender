@@ -1,7 +1,9 @@
 package suspender
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"golang.org/x/exp/constraints"
@@ -31,7 +33,23 @@ func New[T constraints.Ordered](cfg Config) *Suspender[T] {
 	return s
 }
 
-func (s *Suspender[T]) Add(value T) error {
+func (s *Suspender[T]) IncWithCtx(ctx context.Context, value T) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("ctx.Err: %w", err)
+	}
+	if err := s.Inc(value); err != nil {
+		return err
+	}
+
+	go func() {
+		<-ctx.Done()
+		s.Dec(value)
+	}()
+
+	return nil
+}
+
+func (s *Suspender[T]) Inc(value T) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
@@ -45,11 +63,14 @@ func (s *Suspender[T]) Add(value T) error {
 	return nil
 }
 
-func (s *Suspender[T]) Drop(value T) error {
+func (s *Suspender[T]) Dec(value T) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
-	s.m[value] = 0
+	count := s.m[value]
+	if count > 0 {
+		s.m[value] = count - 1
+	}
 
 	return nil
 }
