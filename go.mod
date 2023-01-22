@@ -1,4 +1,4 @@
-module suspender
+module github.com/icecube092/suspender
 
 go 1.19
 
