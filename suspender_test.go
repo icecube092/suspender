@@ -19,7 +19,9 @@ type testSuspender struct {
 }
 
 func (t *testSuspender) SetupTest() {
-	t.suspender = New[uint64](Config{})
+	var err error
+	t.suspender, err = New[uint64](Config{})
+	t.Require().NoError(err)
 }
 
 func (t *testSuspender) TestIncTwice() {

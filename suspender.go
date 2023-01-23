@@ -20,7 +20,7 @@ type Suspender[T constraints.Ordered] struct {
 
 const defaultCount uint64 = 1
 
-func New[T constraints.Ordered](cfg Config) *Suspender[T] {
+func New[T constraints.Ordered](cfg Config) (*Suspender[T], error) {
 	if cfg.Count == 0 {
 		cfg.Count = defaultCount
 	}
@@ -30,7 +30,7 @@ func New[T constraints.Ordered](cfg Config) *Suspender[T] {
 		cfg: cfg,
 	}
 
-	return s
+	return s, nil
 }
 
 func (s *Suspender[T]) IncWithCtx(ctx context.Context, value T) error {
